@@ -1,0 +1,8 @@
+keras==2.9.0
+matplotlib==3.6.0
+music21==8.1.0
+numpy==1.22.4
+pretty_midi==0.2.9
+pypianoroll==1.0.4
+scikit_learn==1.1.3
+tensorflow==2.6.0
