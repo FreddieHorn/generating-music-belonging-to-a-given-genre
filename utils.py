@@ -9,7 +9,7 @@ def softmax(x):
     return e_x / e_x.sum(axis=0)
 
 
-def sample_from(unknown_tag_id, logits, k):
+def get_token(unknown_tag_id, logits, k):
     logits, indices = tf.math.top_k(logits, k= k, sorted=True)
     indices = np.asarray(indices).astype("int32")
     preds = np.asarray(logits).astype("float32")
@@ -18,9 +18,10 @@ def sample_from(unknown_tag_id, logits, k):
         indices = np.delete(indices, unk_tag_position)
         preds = np.delete(preds, unk_tag_position)
     preds = softmax(preds)
-    x=np.random.choice(indices, p=preds)
-    y=indices[np.argmax(preds)]
-    return np.random.choice(indices, p=preds)
+    choice=np.random.choice(indices, p=preds)
+    #alternative choice (unstable)
+    #choice=indices[np.argmax(preds)]
+    return choice
 
 def convertToRoll(int_to_combi, binarizer, seq_list):
     seq_list = [int_to_combi[i] for i in seq_list]
@@ -80,23 +81,17 @@ def piano_roll_to_pretty_midi(piano_roll_in, fs, program=0, velocity = 64):
     pm.instruments.append(instrument)
     return pm
 
-def save_midi(name, path, out_piano_roll, original_piano_roll):
+def save_midi(name, path, out_piano_roll):
     bpm = 150
     fs = 1/((60/bpm)/4)
     mid_out = piano_roll_to_pretty_midi(out_piano_roll.T, fs=fs)
-    mid_ori = piano_roll_to_pretty_midi(original_piano_roll.T, fs=fs)
     midi_out_path = path+f"{name}.mid"
     if midi_out_path is not None:
             mid_out.write(midi_out_path)
-            
-    midi_ori_path = path+f"ORIGINAL-{name}.mid"
-    if midi_ori_path is not None:
-            mid_ori.write(midi_ori_path)
 
 
 def get_midi_files():
     directory = "POP9/**"
-    print("uga")
     for filename in glob.iglob(directory, recursive=True):
         print(filename)
 

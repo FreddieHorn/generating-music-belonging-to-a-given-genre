@@ -17,26 +17,26 @@ class MIDIparser:
         self.extract_to_npy(DATA_PATH_POP, EXPORT_DATA_POP)
 
     def preprocess_midi(self,path, offset_by, bpm):
-        mid = pretty_midi.PrettyMIDI(midi_file=path)
-        filtered_inst_ls = [inst for inst in mid.instruments if ((len(inst.notes) > 0) and
+        parsed_midi = pretty_midi.PrettyMIDI(midi_file=path)
+        filtered_instruments = [inst for inst in parsed_midi.instruments if ((len(inst.notes) > 0) and
                                                         (inst.is_drum == False) and
                                                         (inst.program < 8)
                                                     )]
 
-        piano = filtered_inst_ls[np.argmax([len(inst.notes) for inst in filtered_inst_ls])]
+        piano = filtered_instruments[np.argmax([len(inst.notes) for inst in filtered_instruments])]
                 
         start_time = piano.notes[0].start
         end_time = piano.get_end_time()
         
         quater_note_len = 60/bpm
-        nth_note = 8
-        fs = 1/(quater_note_len/nth_note)
+        thrity_two_note = 8
+        fs = 1/(quater_note_len/thrity_two_note)
         
-        piano_roll = piano.get_piano_roll(fs = fs, times = np.arange(start_time, end_time,1./fs))
-        piano_roll = np.roll(piano_roll, -offset_by)
-        out = np.where(piano_roll > 0, 1,0)
-        
-        return out.T
+        piano_roll_matrix = piano.get_piano_roll(fs = fs, times = np.arange(start_time, end_time,1./fs))
+        piano_roll_matrix = np.roll(piano_roll_matrix, -offset_by)
+        output_pianoroll = np.where(piano_roll_matrix > 0, 1,0)
+
+        return output_pianoroll.T
 
     def extract_bpm_and_offset(self, path):
         mid = converter.parse(path)

@@ -1,6 +1,6 @@
 import numpy as np
 from transformer import TransformerBlock, MultiHeadSelfAttention, TokenAndPositionEmbedding, InputDataGenerator, GeneratorCallback
-from utils import sample_from, softmax, convertToRoll, piano_roll_to_pretty_midi, save_midi
+from utils import get_token, softmax, convertToRoll, piano_roll_to_pretty_midi, save_midi
 from keras.layers import Input, Dense
 from keras.models import Model
 from keras.optimizers import Adam
@@ -31,15 +31,12 @@ class NetModel:
         x = transformer_block4(x)
         outputs = Dense(self.vocab_size)(x)
         model = Model(inputs=inputs, outputs=[outputs,x])
-        loss_fn = SparseCategoricalCrossentropy(from_logits=True)
-        #opt = Adam(learning_rate=0.001)
-        model.compile(
-            optimizer="adam", loss=[loss_fn,None])
-        print(model.summary())
+        fun_loss = SparseCategoricalCrossentropy(from_logits=True)
+        model.compile(optimizer="adam", loss=[fun_loss,None])
+        #print(model.summary()) 
         self.model = model
 
-        return self.model
-        # No loss and optimization based on word embeddings from transformer block
+        return model
 
     def plot_model_pic(self):
         plot_model(self.model, to_file='model2.png', show_shapes=True, show_layer_names=True)
@@ -47,8 +44,9 @@ class NetModel:
     def train(self, all_song_tokenised, batch_size, epochs, sequence_length, path):
         train_loss = []
         val_loss = []
-        train_data = InputDataGenerator(all_song_tokenised, batch_size, sequence_length)
-        val_data = InputDataGenerator(all_song_tokenised, batch_size, sequence_length)
+        #90% train, 10% val
+        train_data = InputDataGenerator(all_song_tokenised[:0.9*len(all_song_tokenised)], batch_size, sequence_length)
+        val_data = InputDataGenerator(all_song_tokenised[0.9*len(all_song_tokenised):], batch_size, sequence_length)
         checkpoint = tf.keras.callbacks.ModelCheckpoint(
             path,
             monitor='loss',
@@ -62,17 +60,19 @@ class NetModel:
                    epochs = epochs,
                    verbose = 1,
                    validation_data = val_data)
+
         train_loss += history.history['loss']
+        val_loss += history.history['loss']
 
         plt.plot(train_loss)
         plt.title('model train')
         plt.ylabel('loss')
         plt.xlabel('epoch')
-        plt.legend(['train_loss'], loc='upper right')
+        plt.legend(['train_loss', 'val_loss'], loc='upper right')
         try:
             plt.savefig(f'{epochs}_loss.png')
         except:
-            pass
+            print("Something went wrong during saving a matplotlib image")
 
 class MusicGenerator():
     def __init__(self, starting_seed_len, no_of_tones_to_gen, num_of_songs, mlb, unk_tag_idx) -> None:
@@ -94,8 +94,7 @@ class MusicGenerator():
             seq_start_at = random.randint(0,len(all_songs_tokenised[song_idx])-seq_length)   
             self.start_tokens = all_songs_tokenised[song_idx][seq_start_at:seq_start_at + seq_length].tolist()
             
-        self.ori = self.start_tokens.copy()
-        backup = self.ori.copy()
+
 
 
         self.tokens_generated = []
@@ -115,14 +114,11 @@ class MusicGenerator():
                     sample_index = len(self.start_tokens) - 1
                 x = np.array([x])
                 y, logs = model.predict(x)
-                # np.savetxt("logs.txt", logs)
-                sample_token = sample_from(self.unk_tag_id, y[0][sample_index], 10)
-                self.tokens_generated.append(sample_token)
-                self.start_tokens.append(sample_token)
+                predicted_token = get_token(self.unk_tag_id, y[0][sample_index], 10)
+                self.tokens_generated.append(predicted_token)
+                self.start_tokens.append(predicted_token)
                 self.num_tokens_generated = len(self.tokens_generated)
                 print(f"generated {self.num_tokens_generated} notes || SONG {i} / {self.NUM_SONGS}")
             piano_roll = convertToRoll(int_to_combi, self.mlb, self.start_tokens)
-            print("-------------------------------------------")
-            ori = convertToRoll(int_to_combi, self.mlb, self.ori)
-            save_midi(f"{name_of_songs}nr{i}", "./POP_750/", piano_roll, ori)
+            save_midi(f"{name_of_songs}nr{i}", "./generated", piano_roll)
         

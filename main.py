@@ -50,7 +50,7 @@ if __name__ == '__main__':
     number_tones_to_gen = 1000
     num_songs_to_gen = 10
     music_generator = MusicGenerator(starting_seed_len, number_tones_to_gen, num_songs_to_gen, mlb, unk_tag_idx)
-    music_generator.generate_tones(maxlen, model_creator.model, int_to_combi, all_songs_tokenised, sequence_length , "pop06-11-")
+    music_generator.generate_tones(maxlen, model_creator.model, int_to_combi, all_songs_tokenised, sequence_length , "jazz-")
 
 
     # # #____________PROCESSING POP SONGS______________
@@ -63,5 +63,4 @@ if __name__ == '__main__':
     load_path = f"./transformer_output/popTransfer.hdf5"
     model_creator.model.load_weights(load_path)
     #model_creator.train(all_songs_tokenised, batch_size, epochs_pop, sequence_length, save_path)
-    music_generator.choose_starting_tones(all_songs_tokenised, sequence_length)
-    music_generator.generate_tones(maxlen, model_creator.model, int_to_combi, all_songs_tokenised, sequence_length, f"WHY_DOESNT_IT_WORK_")
+    music_generator.generate_tones(maxlen, model_creator.model, int_to_combi, all_songs_tokenised, sequence_length, f"pop-")
