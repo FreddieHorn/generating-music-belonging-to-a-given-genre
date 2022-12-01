@@ -93,9 +93,7 @@ class MusicGenerator():
             song_idx = random.randint(0,len(all_songs_tokenised)-1)
             seq_start_at = random.randint(0,len(all_songs_tokenised[song_idx])-seq_length)   
             self.start_tokens = all_songs_tokenised[song_idx][seq_start_at:seq_start_at + seq_length].tolist()
-            
-
-
+    
 
         self.tokens_generated = []
         self.num_tokens_generated = 0
@@ -105,7 +103,6 @@ class MusicGenerator():
         for i in range(self.NUM_SONGS):
             self.choose_starting_tones(all_songs_tokenised, seq_length)
             while self.num_tokens_generated <= self.num_note_to_gen:
-
                 x = self.start_tokens[-self.seq_length:]
                 pad_len = maxlen - len(self.start_tokens)
                 sample_index = -1
@@ -113,12 +110,11 @@ class MusicGenerator():
                     x = self.start_tokens + [0] * pad_len
                     sample_index = len(self.start_tokens) - 1
                 x = np.array([x])
-                y, logs = model.predict(x)
+                y = model.predict(x)
                 predicted_token = get_token(self.unk_tag_id, y[0][sample_index], 10)
                 self.tokens_generated.append(predicted_token)
                 self.start_tokens.append(predicted_token)
                 self.num_tokens_generated = len(self.tokens_generated)
-                print(f"generated {self.num_tokens_generated} notes || SONG {i} / {self.NUM_SONGS}")
             piano_roll = convertToRoll(int_to_combi, self.mlb, self.start_tokens)
             save_midi(f"{name_of_songs}nr{i}", "./generated", piano_roll)
         
