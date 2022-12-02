@@ -47,16 +47,16 @@ class MIDIparser:
             if isinstance(i, tempo.MetronomeMark):
                 bpm = i.getQuarterBPM()
                 break
-        try:
-            key = piano_part.keySignature
-        except:
-            print(f"Error while finding key signature for song")
-        try:
-            key_in_major = key.asKey(mode='major')
-            offset_by = key_in_major.tonic.pitchClass
-        except:
-            print("alternative offset")
-            offset_by = piano_part.offset
+        # try:
+        #     key = piano_part.keySignature
+        # except:
+        #     print(f"Error while finding key signature for song")
+        # try:
+        #     key_in_major = key.asKey(mode='major')
+        #     offset_by = key_in_major.tonic.pitchClass
+        # except:
+        #     print("alternative offset")
+        offset_by = piano_part.offset
         return offset_by, bpm
 
     def process_piano_roll(self, piano_roll, max_consecutive = 64):
